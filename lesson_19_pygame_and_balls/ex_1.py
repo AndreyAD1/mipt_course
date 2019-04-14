@@ -23,6 +23,11 @@ while True:
     x += vx * dt
     y += vy * dt
 
+    border_reached = any([x < 0, x > width, y < 0, y > height])
+    if border_reached:
+        vx = -vx
+        vy = -vy
+
     screen.fill((0, 0, 0))
     pygame.draw.circle(screen, (150, 10, 50), (int(x), int(y)), 20)
 
