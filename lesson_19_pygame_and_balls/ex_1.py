@@ -1,56 +1,78 @@
 import sys
 import pygame
 
-width = 500
-height = 500
 
-screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption('YAHOOOO')
-clock = pygame.time.Clock()
+def get_new_velocity(init_x_velocity, init_y_velocity):
+    friction_coefficient = 0.01
 
-x = 30
-y = 30
-vx = 50
-vy = 50
-BALL_RADIUS = 20
-
-while True:
-    dt = clock.tick(50) / 1000.0
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit()
+    result_x_velocity = init_x_velocity
+    result_y_velocity = init_y_velocity
 
     if pygame.key.get_pressed()[pygame.K_UP]:
-        vy -= 5
+        result_y_velocity -= 5
     elif pygame.key.get_pressed()[pygame.K_DOWN]:
-        vy += 5
+        result_y_velocity += 5
     elif pygame.key.get_pressed()[pygame.K_RIGHT]:
-        vx += 5
+        result_x_velocity += 5
     elif pygame.key.get_pressed()[pygame.K_LEFT]:
-        vx -= 5
+        result_x_velocity -= 5
     else:
         pass
 
-    vx -= 0.01 * vx
-    vy -= 0.01 * vy
+    result_x_velocity -= friction_coefficient * result_x_velocity
+    result_y_velocity -= friction_coefficient * result_y_velocity
 
-    x += vx * dt
-    y += vy * dt
+    return result_x_velocity, result_y_velocity
 
-    border_reached = any(
-        [
-            x < BALL_RADIUS,
-            x > width - BALL_RADIUS,
-            y < BALL_RADIUS,
-            y > height - BALL_RADIUS
-        ]
-    )
-    if border_reached:
-        vx = -vx
-        vy = -vy
 
-    screen.fill((0, 0, 0))
-    pygame.draw.circle(screen, (150, 10, 50), (int(x), int(y)), 20)
+def start_ball_game(
+        display_width=500,
+        display_height=500,
+        display_name='Balls',
+        ball_radius=20,
+        x_coord=30,
+        y_coord=30,
+        vx=50,
+        vy=50,
+):
+    screen = pygame.display.set_mode((display_width, display_height))
+    pygame.display.set_caption(display_name)
+    clock = pygame.time.Clock()
 
-    pygame.display.flip()
+    while True:
+        dt = clock.tick(50) / 1000.0
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+        vx, vy = get_new_velocity(vx, vy)
+
+        x_coord += vx * dt
+        y_coord += vy * dt
+
+        border_reached = any(
+            [
+                x_coord < ball_radius,
+                x_coord > display_width - ball_radius,
+                y_coord < ball_radius,
+                y_coord > display_height - ball_radius
+            ]
+        )
+        if border_reached:
+            vx = -vx
+            vy = -vy
+
+        screen.fill((0, 0, 0))
+        pygame.draw.circle(
+            screen,
+            (150, 10, 50),
+            (int(x_coord), int(y_coord)),
+            20
+        )
+
+        pygame.display.flip()
+
+
+if __name__ == '__main__':
+    start_ball_game()
