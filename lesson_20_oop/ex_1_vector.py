@@ -1,3 +1,7 @@
+from functools import reduce
+from typing import List
+
+
 class Vector:
     def __init__(self, x, y):
         self.x = x
@@ -26,10 +30,16 @@ class Vector:
         return self
 
 
+def get_center_of_mass(points: List[Vector]) -> Vector:
+    sum_vector = reduce(lambda point_1, point_2: point_1 + point_2, points)
+    result_x = sum_vector.x / len(points)
+    result_y = sum_vector.y / len(points)
+    return Vector(result_x, result_y)
+
+
 if __name__ == '__main__':
-    first_vector = Vector(1, 1)
-    second_vector = Vector(2, 5)
-    print(first_vector + second_vector)
-    print(first_vector - second_vector)
-    print(first_vector * second_vector)
-    print(-first_vector)
+    first_vector = Vector(-1, -1)
+    second_vector = Vector(2, 2)
+    third_vector = Vector(3, 3)
+
+    print(get_center_of_mass([first_vector, second_vector, third_vector]))
