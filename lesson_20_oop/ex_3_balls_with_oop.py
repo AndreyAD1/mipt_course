@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 import sys
 
 import pygame
@@ -30,22 +30,15 @@ class Ball:
         self.color = (150, 10, 50)
         self.radius = 20
         self.velocity = Vector(50, 50)
+        self.possible_colors = [(150, 10, 50), (50, 100, 150)]
 
     def get_new_coordinates(self, dt: float):
         self.coords += self.velocity * dt
 
-    def change_direction_if_reach_a_wall(self, max_x: int, max_y: int):
-        x_border_reached = (
-                self.coords.x < self.radius or
-                self.coords.x > max_x - self.radius
-        )
-        y_border_reached = (
-                self.coords.y < self.radius or
-                self.coords.y > max_y - self.radius
-        )
-        if x_border_reached:
+    def change_direction_after_collision(self, x_border, y_border):
+        if x_border:
             self.velocity.x = -self.velocity.x
-        if y_border_reached:
+        if y_border:
             self.velocity.y = -self.velocity.y
 
     def render(self, canvas):
@@ -55,6 +48,41 @@ class Ball:
             self.coords.get_int_coords(),
             self.radius
         )
+
+    @property
+    def x(self):
+        return self.coords.x
+
+    @property
+    def y(self):
+        return self.coords.y
+
+    @property
+    def left_edge(self):
+        return self.x - self.radius
+
+    @property
+    def right_edge(self):
+        return self.x + self.radius
+
+    @property
+    def upper_edge(self):
+        return self.y - self.radius
+
+    @property
+    def lower_edge(self):
+        return self.y + self.radius
+
+    def click_is_on_the_ball(self, click_coords: Tuple[int]):
+        hit_by_x = self.left_edge < click_coords[0] < self.right_edge
+        hit_by_y = self.upper_edge < click_coords[1] < self.lower_edge
+        return hit_by_x and hit_by_y
+
+    def change_color(self):
+        initial_color = self.color
+        self.possible_colors.remove(self.color)
+        self.color = self.possible_colors[0]
+        self.possible_colors.append(initial_color)
 
 
 def start_game(
@@ -68,15 +96,29 @@ def start_game(
     clock = pygame.time.Clock()
 
     while True:
+        click_position = ()
         dt = clock.tick(50) / 1000.0
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
+            if event.type == pygame.MOUSEBUTTONUP:
+                click_position = event.pos
 
         for ball in balls:
             ball.get_new_coordinates(dt)
-            ball.change_direction_if_reach_a_wall(display_width, display_height)
+            x_border_reached = (
+                    ball.left_edge < 0 or ball.right_edge > display_width
+            )
+            y_border_reached = (
+                    ball.upper_edge < 0 or ball.lower_edge > display_height
+            )
+            ball.change_direction_after_collision(
+                x_border_reached,
+                y_border_reached
+            )
+            if click_position and ball.click_is_on_the_ball(click_position):
+                ball.change_color()
 
         screen.fill((0, 0, 0))
 
