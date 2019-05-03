@@ -17,6 +17,9 @@ class Vector:
         new_y = self.y + addend.y
         return Vector(new_x, new_y)
 
+    def __sub__(self, subtrahend):
+        return Vector(self.x - subtrahend.x, self.y - subtrahend.y)
+
     def __mul__(self, multiplier):
         return Vector(self.x * multiplier, self.y * multiplier)
 
@@ -31,9 +34,15 @@ class Ball:
         self.radius = 20
         self.velocity = Vector(50, 50)
         self.possible_colors = [(150, 10, 50), (50, 100, 150)]
+        self.friction_coefficient = 0.01
+        self.manual_control = False
 
-    def get_new_coordinates(self, dt: float):
+    def refresh_coordinates(self, dt: float):
         self.coords += self.velocity * dt
+
+    def refresh_velocity(self, acceleration: Vector):
+        self.velocity += acceleration
+        self.velocity -= self.velocity * self.friction_coefficient
 
     def change_direction_after_collision(self, x_border, y_border):
         if x_border:
@@ -48,6 +57,9 @@ class Ball:
             self.coords.get_int_coords(),
             self.radius
         )
+
+    def switch_manual_control(self):
+        self.manual_control = not self.manual_control
 
     @property
     def x(self):
@@ -97,6 +109,9 @@ def start_game(
 
     while True:
         click_position = ()
+        x_acceleration = 0
+        y_acceleration = 0
+
         dt = clock.tick(50) / 1000.0
 
         for event in pygame.event.get():
@@ -105,8 +120,19 @@ def start_game(
             if event.type == pygame.MOUSEBUTTONUP:
                 click_position = event.pos
 
+        if pygame.key.get_pressed()[pygame.K_RIGHT]:
+            x_acceleration += 5
+        if pygame.key.get_pressed()[pygame.K_LEFT]:
+            x_acceleration -= 5
+        if pygame.key.get_pressed()[pygame.K_DOWN]:
+            y_acceleration += 5
+        if pygame.key.get_pressed()[pygame.K_UP]:
+            y_acceleration -= 5
+
+        acceleration = Vector(x_acceleration, y_acceleration)
+
         for ball in balls:
-            ball.get_new_coordinates(dt)
+            ball.refresh_coordinates(dt)
             x_border_reached = (
                     ball.left_edge < 0 or ball.right_edge > display_width
             )
@@ -119,6 +145,10 @@ def start_game(
             )
             if click_position and ball.click_is_on_the_ball(click_position):
                 ball.change_color()
+                ball.switch_manual_control()
+
+            if ball.manual_control:
+                ball.refresh_velocity(acceleration)
 
         screen.fill((0, 0, 0))
 
