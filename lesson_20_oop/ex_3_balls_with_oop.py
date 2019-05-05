@@ -32,9 +32,8 @@ class Ball:
         self.coords = coordinates
         self.color = (150, 10, 50)
         self.radius = 20
-        self.velocity = Vector(50, 50)
+        self.velocity = Vector(0, 0)
         self.possible_colors = [(150, 10, 50), (50, 100, 150)]
-        self.friction_coefficient = 0.01
         self.manual_control = False
 
     def refresh_coordinates(self, dt: float):
@@ -42,7 +41,9 @@ class Ball:
 
     def accelerate(self, acceleration: Vector):
         self.velocity += acceleration
-        self.velocity -= self.velocity * self.friction_coefficient
+
+    def slow_down(self, friction_coefficient):
+        self.velocity -= self.velocity * friction_coefficient
 
     def change_direction_after_collision(self, x_border, y_border):
         if x_border:
@@ -102,6 +103,7 @@ def start_game(
         display_width=500,
         display_height=500,
         display_name='Balls',
+        friction_coefficient=0.01
 ):
     screen = pygame.display.set_mode((display_width, display_height))
     pygame.display.set_caption(display_name)
@@ -132,6 +134,12 @@ def start_game(
 
         acceleration = Vector(x_acceleration, y_acceleration)
 
+        if not balls:
+            if click_position:
+                x_coord, y_coord = click_position
+                balls = [Ball(Vector(x_coord, y_coord))]
+            continue
+
         for ball in balls:
             if click_position and ball.click_is_on_the_ball(click_position):
                 click_on_blank_space = False
@@ -152,7 +160,7 @@ def start_game(
             if ball.manual_control:
                 ball.accelerate(acceleration)
 
-            # ball.slow_down()
+            ball.slow_down(friction_coefficient)
 
         if click_position and click_on_blank_space:
             x_coord, y_coord = click_position
@@ -164,4 +172,5 @@ def start_game(
 
 
 if __name__ == '__main__':
-    start_game(balls=[Ball(Vector(200, 100)), Ball(Vector(250, 300))])
+    # start_game(balls=[Ball(Vector(200, 100)), Ball(Vector(250, 300))])
+    start_game()
