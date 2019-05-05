@@ -40,7 +40,7 @@ class Ball:
     def refresh_coordinates(self, dt: float):
         self.coords += self.velocity * dt
 
-    def refresh_velocity(self, acceleration: Vector):
+    def accelerate(self, acceleration: Vector):
         self.velocity += acceleration
         self.velocity -= self.velocity * self.friction_coefficient
 
@@ -97,6 +97,10 @@ class Ball:
         self.possible_colors.append(initial_color)
 
 
+def add_new_ball(position: Tuple[int]):
+    pass
+
+
 def start_game(
         balls: List[Ball] = None,
         display_width=500,
@@ -109,6 +113,7 @@ def start_game(
 
     while True:
         click_position = ()
+        click_on_blank_space = True
         x_acceleration = 0
         y_acceleration = 0
 
@@ -132,6 +137,11 @@ def start_game(
         acceleration = Vector(x_acceleration, y_acceleration)
 
         for ball in balls:
+            if click_position and ball.click_is_on_the_ball(click_position):
+                click_on_blank_space = False
+                ball.change_color()
+                ball.switch_manual_control()
+
             ball.refresh_coordinates(dt)
             x_border_reached = (
                     ball.left_edge < 0 or ball.right_edge > display_width
@@ -143,17 +153,16 @@ def start_game(
                 x_border_reached,
                 y_border_reached
             )
-            if click_position and ball.click_is_on_the_ball(click_position):
-                ball.change_color()
-                ball.switch_manual_control()
-
             if ball.manual_control:
-                ball.refresh_velocity(acceleration)
+                ball.accelerate(acceleration)
+
+            # ball.slow_down()
+
+        if click_position and click_on_blank_space:
+            add_new_ball(click_position)
 
         screen.fill((0, 0, 0))
-
         [ball.render(screen) for ball in balls]
-
         pygame.display.flip()
 
 
