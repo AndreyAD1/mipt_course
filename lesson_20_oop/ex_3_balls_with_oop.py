@@ -97,10 +97,6 @@ class Ball:
         self.possible_colors.append(initial_color)
 
 
-def add_new_ball(position: Tuple[int]):
-    pass
-
-
 def start_game(
         balls: List[Ball] = None,
         display_width=500,
@@ -159,7 +155,8 @@ def start_game(
             # ball.slow_down()
 
         if click_position and click_on_blank_space:
-            add_new_ball(click_position)
+            x_coord, y_coord = click_position
+            balls.append(Ball(Vector(x_coord, y_coord)))
 
         screen.fill((0, 0, 0))
         [ball.render(screen) for ball in balls]
