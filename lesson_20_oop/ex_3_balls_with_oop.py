@@ -1,3 +1,4 @@
+from math import sqrt
 from typing import List, Tuple
 import sys
 
@@ -21,7 +22,18 @@ class Vector:
         return Vector(self.x - subtrahend.x, self.y - subtrahend.y)
 
     def __mul__(self, multiplier):
+        return Vector(self.x * multiplier.x, self.y * multiplier.y)
+
+    def __rmul__(self, multiplier):
         return Vector(self.x * multiplier, self.y * multiplier)
+
+    @property
+    def length(self):
+        return sqrt(self.x**2 + self.y**2)
+
+    @property
+    def unit_vector(self):
+        return Vector(self.x / self.length, self.y / self.length)
 
     def get_int_coords(self):
         return int(self.x), int(self.y)
@@ -37,13 +49,13 @@ class Ball:
         self.manual_control = False
 
     def refresh_coordinates(self, dt: float):
-        self.coords += self.velocity * dt
+        self.coords += dt * self.velocity
 
     def accelerate(self, acceleration: Vector):
         self.velocity += acceleration
 
     def slow_down(self, friction_coefficient):
-        self.velocity -= self.velocity * friction_coefficient
+        self.velocity -= friction_coefficient * self.velocity
 
     def change_direction_after_collision(self, x_border, y_border):
         if x_border:
@@ -157,6 +169,8 @@ def start_game(
                 x_border_reached,
                 y_border_reached
             )
+            # add ball collision in case that distance between centers is less
+            # than radius sum.
             if ball.manual_control:
                 ball.accelerate(acceleration)
 
