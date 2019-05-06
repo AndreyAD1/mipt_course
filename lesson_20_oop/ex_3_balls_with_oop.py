@@ -55,6 +55,7 @@ class Ball:
         self.possible_colors = [(150, 10, 50), (50, 100, 150)]
         self.manual_control = False
         self.mass = 1
+        self.collided_ball = None
 
     def refresh_coordinates(self, dt: float):
         self.coords += dt * self.velocity
@@ -71,13 +72,15 @@ class Ball:
         if y_border:
             self.velocity.y = -self.velocity.y
 
-    def change_direction_after_ball_collision(self, ball_2):
+    def change_direction_after_ball_collision(self):
+        ball_2 = self.collided_ball
         collision_unit_vector = (self.coords - ball_2.coords).unit_vector
         mass_sum = self.mass + ball_2.mass
         add_1 = -2 * ball_2.mass / mass_sum * self.momentum
         add_2 = 2 * self.mass / mass_sum * ball_2.momentum
         new_momentum = (add_1 + add_2) * collision_unit_vector ** 2
         self.velocity = new_momentum / self.mass
+        self.collided_ball = None
 
     def render(self, canvas):
         pygame.draw.circle(
@@ -172,6 +175,12 @@ def start_game(
                 balls = [Ball(Vector(x_coord, y_coord))]
             continue
 
+        for ball_1, ball_2 in combinations(balls, 2):
+            distance_between_balls = (ball_1.coords - ball_2.coords).length
+            if distance_between_balls <= ball_1.radius + ball_2.radius:
+                ball_1.collided_ball = ball_2
+                ball_2.collided_ball = ball_1
+
         for ball in balls:
             if click_position and ball.click_is_on_the_ball(click_position):
                 click_on_blank_space = False
@@ -190,16 +199,19 @@ def start_game(
                 y_border_reached
             )
 
+            if ball.collided_ball:
+                ball.change_direction_after_ball_collision()
+
             if ball.manual_control:
                 ball.accelerate(acceleration)
 
             ball.slow_down(friction_coefficient)
 
-        for ball_1, ball_2 in combinations(balls, 2):
-            distance_between_balls = (ball_1.coords - ball_2.coords).length
-            if distance_between_balls <= ball_1.radius + ball_2.radius:
-                ball_1.change_direction_after_ball_collision(ball_2)
-                ball_2.change_direction_after_ball_collision(ball_1)
+        # for ball_1, ball_2 in combinations(balls, 2):
+        #     distance_between_balls = (ball_1.coords - ball_2.coords).length
+        #     if distance_between_balls <= ball_1.radius + ball_2.radius:
+        #         ball_1.change_direction_after_ball_collision(ball_2)
+        #         ball_2.change_direction_after_ball_collision(ball_1)
 
         if click_position and click_on_blank_space:
             x_coord, y_coord = click_position
