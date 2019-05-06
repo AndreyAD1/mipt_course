@@ -1,3 +1,4 @@
+from itertools import combinations
 from math import sqrt
 from typing import List, Tuple
 import sys
@@ -24,8 +25,14 @@ class Vector:
     def __mul__(self, multiplier):
         return Vector(self.x * multiplier.x, self.y * multiplier.y)
 
-    def __rmul__(self, multiplier):
+    def __rmul__(self, multiplier: float or int):
         return Vector(self.x * multiplier, self.y * multiplier)
+
+    def __truediv__(self, divisor: float or int):
+        return Vector(self.x / divisor, self.y / divisor)
+
+    def __pow__(self, power, modulo=None):
+        return Vector(self.x ** power, self.y ** power)
 
     @property
     def length(self):
@@ -47,6 +54,7 @@ class Ball:
         self.velocity = Vector(0, 0)
         self.possible_colors = [(150, 10, 50), (50, 100, 150)]
         self.manual_control = False
+        self.mass = 1
 
     def refresh_coordinates(self, dt: float):
         self.coords += dt * self.velocity
@@ -57,11 +65,19 @@ class Ball:
     def slow_down(self, friction_coefficient):
         self.velocity -= friction_coefficient * self.velocity
 
-    def change_direction_after_collision(self, x_border, y_border):
+    def change_direction_after_wall_collision(self, x_border, y_border):
         if x_border:
             self.velocity.x = -self.velocity.x
         if y_border:
             self.velocity.y = -self.velocity.y
+
+    def change_direction_after_ball_collision(self, ball_2):
+        collision_unit_vector = (self.coords - ball_2.coords).unit_vector
+        mass_sum = self.mass + ball_2.mass
+        add_1 = -2 * ball_2.mass / mass_sum * self.momentum
+        add_2 = 2 * self.mass / mass_sum * ball_2.momentum
+        new_momentum = (add_1 + add_2) * collision_unit_vector ** 2
+        self.velocity = new_momentum / self.mass
 
     def render(self, canvas):
         pygame.draw.circle(
@@ -97,6 +113,10 @@ class Ball:
     @property
     def lower_edge(self):
         return self.y + self.radius
+
+    @property
+    def momentum(self):
+        return self.mass * self.velocity
 
     def click_is_on_the_ball(self, click_coords: Tuple[int]):
         hit_by_x = self.left_edge < click_coords[0] < self.right_edge
@@ -165,16 +185,21 @@ def start_game(
             y_border_reached = (
                     ball.upper_edge < 0 or ball.lower_edge > display_height
             )
-            ball.change_direction_after_collision(
+            ball.change_direction_after_wall_collision(
                 x_border_reached,
                 y_border_reached
             )
-            # add ball collision in case that distance between centers is less
-            # than radius sum.
+
             if ball.manual_control:
                 ball.accelerate(acceleration)
 
             ball.slow_down(friction_coefficient)
+
+        for ball_1, ball_2 in combinations(balls, 2):
+            distance_between_balls = (ball_1.coords - ball_2.coords).length
+            if distance_between_balls <= ball_1.radius + ball_2.radius:
+                ball_1.change_direction_after_ball_collision(ball_2)
+                ball_2.change_direction_after_ball_collision(ball_1)
 
         if click_position and click_on_blank_space:
             x_coord, y_coord = click_position
