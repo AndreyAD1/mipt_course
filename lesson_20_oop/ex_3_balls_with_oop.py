@@ -72,8 +72,8 @@ class Ball:
         if y_border:
             self.velocity.y = -self.velocity.y
 
-    def change_direction_after_ball_collision(self):
-        ball_2 = self.collided_ball
+    def change_direction_after_ball_collision(self, ball_2):
+        # ball_2 = self.collided_ball
         collision_unit_vector = (self.coords - ball_2.coords).unit_vector
         mass_sum = self.mass + ball_2.mass
         add_1 = -2 * ball_2.mass / mass_sum * self.momentum
@@ -126,6 +126,15 @@ class Ball:
         hit_by_y = self.upper_edge < click_coords[1] < self.lower_edge
         return hit_by_x and hit_by_y
 
+    def click_near_the_ball(self, click_coords: Tuple[int]):
+        left_blind_space = self.left_edge - self.radius
+        right_blind_space = self.right_edge + self.radius
+        upper_blind_space = self.upper_edge - self.radius
+        lower_blind_space = self.lower_edge + self.radius
+        hit_by_x = left_blind_space < click_coords[0] < right_blind_space
+        hit_by_y = upper_blind_space < click_coords[1] < lower_blind_space
+        return hit_by_x and hit_by_y
+
     def change_color(self):
         initial_color = self.color
         self.possible_colors.remove(self.color)
@@ -175,17 +184,19 @@ def start_game(
                 balls = [Ball(Vector(x_coord, y_coord))]
             continue
 
-        for ball_1, ball_2 in combinations(balls, 2):
-            distance_between_balls = (ball_1.coords - ball_2.coords).length
-            if distance_between_balls <= ball_1.radius + ball_2.radius:
-                ball_1.collided_ball = ball_2
-                ball_2.collided_ball = ball_1
+        # for ball_1, ball_2 in combinations(balls, 2):
+        #     distance_between_balls = (ball_1.coords - ball_2.coords).length
+        #     if distance_between_balls <= ball_1.radius + ball_2.radius:
+        #         ball_1.collided_ball = ball_2
+        #         ball_2.collided_ball = ball_1
 
         for ball in balls:
-            if click_position and ball.click_is_on_the_ball(click_position):
-                click_on_blank_space = False
-                ball.change_color()
-                ball.switch_manual_control()
+            if click_position:
+                if ball.click_near_the_ball(click_position):
+                    click_on_blank_space = False
+                if ball.click_is_on_the_ball(click_position):
+                    ball.change_color()
+                    ball.switch_manual_control()
 
             ball.refresh_coordinates(dt)
             x_border_reached = (
@@ -199,19 +210,19 @@ def start_game(
                 y_border_reached
             )
 
-            if ball.collided_ball:
-                ball.change_direction_after_ball_collision()
+            # if ball.collided_ball:
+            #     ball.change_direction_after_ball_collision()
 
             if ball.manual_control:
                 ball.accelerate(acceleration)
 
             ball.slow_down(friction_coefficient)
 
-        # for ball_1, ball_2 in combinations(balls, 2):
-        #     distance_between_balls = (ball_1.coords - ball_2.coords).length
-        #     if distance_between_balls <= ball_1.radius + ball_2.radius:
-        #         ball_1.change_direction_after_ball_collision(ball_2)
-        #         ball_2.change_direction_after_ball_collision(ball_1)
+        for ball_1, ball_2 in combinations(balls, 2):
+            distance_between_balls = (ball_1.coords - ball_2.coords).length
+            if distance_between_balls <= ball_1.radius + ball_2.radius:
+                ball_1.change_direction_after_ball_collision(ball_2)
+                ball_2.change_direction_after_ball_collision(ball_1)
 
         if click_position and click_on_blank_space:
             x_coord, y_coord = click_position
