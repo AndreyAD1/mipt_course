@@ -59,14 +59,14 @@ def get_interesting_paths_only(
 
 if __name__ == '__main__':
     adjacency_matrix = [
-        [0, 1, 0, 0, 0, 1],
+        [0, 1, 1, 0, 0, 1],
         [1, 0, 1, 0, 0, 0],
-        [0, 1, 0, 1, 0, 0],
+        [1, 1, 0, 1, 0, 0],
         [0, 0, 1, 0, 1, 0],
         [0, 0, 0, 1, 0, 1],
         [1, 0, 0, 0, 1, 0]
     ]
-    start_vertexes = [0, 1, 2]
+    start_vertexes = [0, 5]
     finish_vertexes = [3, 4, 5]
     shortest_paths = get_shortest_weighted_paths(adjacency_matrix)
     result_matrix = get_interesting_paths_only(
